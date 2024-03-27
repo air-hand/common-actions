@@ -1,0 +1,21 @@
+on:
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  assert-actor-is-bot:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@9bb56186c3b09b4f86b1c65136769dd318469633 # v4
+
+      - name: check actor
+        uses: ./inspect_actor
+        id: actor_is_bot
+        with:
+          github_event_payload: ${{ toJson(github.event) }}
+
+      - name: fail if actor is not bot
+        if: steps.actor_is_bot.outputs.is_bot != 'true'
+        run: |
+          exit 1
