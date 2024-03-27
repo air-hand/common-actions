@@ -1,0 +1,43 @@
+name: 'Test for inspect actor is bot or not.'
+
+on:
+  pull_request:
+    branches:
+      - main
+
+permissions: {}
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  inspect-action-test:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      actions: write
+    steps:
+      - uses: actions/checkout@9bb56186c3b09b4f86b1c65136769dd318469633 # v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+      - uses: actions/create-github-app-token@78e5f2ddc08efcb88fbbee6cfa3fed770ba550c3 # v1
+        id: app_token
+        with:
+          app-id: ${{ vars.APP_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
+      - name: run workflow as app(bot)
+        run: |
+          gh workflow run inspect_actor_callee.yaml --ref=${BRANCH}
+        env:
+          GH_TOKEN: ${{ steps.app_token.outputs.token }}
+          BRANCH: ${{ github.head_ref }}
+
+      - name: watch workflow run
+        run: |
+          sleep 10s
+          RUN_ID=$(gh run list --branch ${BRANCH} --event workflow_dispatch --workflow inspect_actor_callee.yaml --limit 1 --json "databaseId,createdAt" --jq '.[] | select(.createdAt > (now - 30 | strftime("%Y-%m-%dT%H-%M-%SZ")))' | jq -r '.databaseId')
+          gh run watch $RUN_ID --exit-status
+        env:
+          GH_TOKEN: ${{ steps.app_token.outputs.token }}
+          BRANCH: ${{ github.head_ref }}
