@@ -1,0 +1,23 @@
+name: "Inspect actor action"
+
+inputs:
+  github_event_payload:
+    description: "The GitHub event payload. use `toJSON(github.event)`"
+    required: true
+
+outputs:
+  is_bot:
+    description: "Whether the actor is a bot"
+    value: ${{ steps.inspect_actor.outputs.is_bot }}
+
+runs:
+  using: "composite"
+  steps:
+    - name: inspect_actor
+      id: inspect_actor
+      run: |
+        is_bot=$(echo "${GITHUB_EVENT_PAYLOAD}" | jq -r '.sender.type == "Bot"')
+        echo "is_bot=$is_bot" >> $GITHUB_OUTPUT
+      shell: bash
+      env:
+        GITHUB_EVENT_PAYLOAD: ${{ inputs.github_event_payload }}
