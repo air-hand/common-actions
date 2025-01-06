@@ -78,5 +78,5 @@ jobs:
         with:
           need-jobs: ${{ toJSON(needs) }}
       - name: check result
-        if: steps.assert.outcome == 'failure'
+        if: steps.assert.outcome != 'failure'
         run: exit 1
