@@ -9,7 +9,7 @@ inputs:
     description: "Whether to allow skipped jobs"
     required: false
     type: boolean
-    default: false 
+    default: false
 
 runs:
   using: "composite"
