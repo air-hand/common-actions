@@ -1,0 +1,83 @@
+name: "Assert job results"
+
+on:
+  pull_request:
+    branches:
+      - main
+    types:
+      - opened
+      - synchronize
+      - reopened
+      - closed
+
+jobs:
+  job-failure:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: fail
+        run: |
+          echo "failure"
+          exit 1
+  job-skip:
+    runs-on: ubuntu-latest
+    if: false
+    timeout-minutes: 5
+    steps:
+      - name: skip
+        run: echo "skipped"
+    
+  job-success:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: success
+        run: echo "success"
+
+  assert-job-success:
+    runs-on: ubuntu-latest
+    needs:
+      - job-success
+    if: always()
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - name: assert
+        uses: ./assert-job-results
+        with:
+          need-jobs: ${{ toJSON(needs) }}
+
+  assert-job-allow-skip:
+    runs-on: ubuntu-latest
+    needs:
+      - job-success
+      - job-skip
+    if: always()
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - name: assert
+        uses: ./assert-job-results
+        with:
+          need-jobs: ${{ toJSON(needs) }}
+          allow-skipped: true
+
+  assert-all-jobs:
+    runs-on: ubuntu-latest
+    needs:
+      - job-failure
+      - job-success
+      - job-skip
+    if: always()
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - name: assert
+        continue-on-error: true
+        id: assert
+        uses: ./assert-job-results
+        with:
+          need-jobs: ${{ toJSON(needs) }}
+      - name: check result
+        if: steps.assert.outcome == 'failure'
+        run: exit 1
