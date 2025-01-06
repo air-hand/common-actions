@@ -1,0 +1,28 @@
+name: "Assert job results action"
+
+inputs:
+  need-jobs:
+    description: "The jobs that need to be checked. use `toJSON(needs)`"
+    type: string
+    required: true
+  allow-skipped:
+    description: "Whether to allow skipped jobs"
+    required: false
+    type: boolean
+    default: false
+
+runs:
+  using: "composite"
+  steps:
+    - name: assert job results
+      run: |
+        NOT_EXPECTED_JOBS=$(echo "${NEED_JOBS}" | jq --arg pattern "${ALLOWED_PATTERN}" -r 'to_entries | map(select(.value.result | test($pattern) | not)) | map(.key + " " + .value.result) | join("\n")')
+        if [ -n "${NOT_EXPECTED_JOBS}" ]; then
+          echo "The following jobs didn't pass."
+          echo "${NOT_EXPECTED_JOBS}"
+          exit 1
+        fi
+      shell: bash
+      env:
+        NEED_JOBS: ${{ inputs.need-jobs }}
+        ALLOWED_PATTERN: ${{ inputs.allow-skipped == 'true' && '^(success|skipped)$' || 'success' }}
