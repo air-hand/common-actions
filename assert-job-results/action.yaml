@@ -25,4 +25,4 @@ runs:
       shell: bash
       env:
         NEED_JOBS: ${{ inputs.need-jobs }}
-        ALLOWED_PATTERN: ${{ inputs.allow-skipped && "^(success|skip)$" || "success" }}
+        ALLOWED_PATTERN: ${{ inputs.allow-skipped == true && '^(success|skip)$' || 'success' }}
