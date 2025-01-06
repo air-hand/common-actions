@@ -3,6 +3,7 @@ name: "Inspect actor action"
 inputs:
   github_event_payload:
     description: "The GitHub event payload. use `toJSON(github.event)`"
+    type: string
     required: true
 
 outputs:
