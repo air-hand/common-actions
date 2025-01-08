@@ -60,7 +60,7 @@ module.exports = async ({github, context}) => {
                 }
             }
         }`, {prId: pr.id});
-        console.debug(res);
+        console.debug(JSON.stringify(res));
         console.log(`Rebased PR: ${pr.url}`);
     }
 }
