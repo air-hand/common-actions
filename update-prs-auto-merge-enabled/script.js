@@ -54,6 +54,9 @@ module.exports = async ({github, context}) => {
             updatePullRequestBranch(input: {pullRequestId: $prId, updateMethod: REBASE}) {
                 pullRequest {
                     url
+                    autoMergeRequest {
+                        enabledAt
+                    }
                 }
             }
         }`, {prId: pr.id});
