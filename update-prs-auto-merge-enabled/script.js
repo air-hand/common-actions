@@ -50,13 +50,14 @@ module.exports = async ({github, context}) => {
 
     for (const pr of autoMergeEnabledPRs) {
         console.log(`Rebasing PR: ${pr.url}`);
-        const {data: {updatePullRequestBranch: {pullRequest: {url}}}} = await github.graphql(`mutation($prId: ID!) {
+        const res = await github.graphql(`mutation($prId: ID!) {
             updatePullRequestBranch(input: {pullRequestId: $prId, updateMethod: REBASE}) {
                 pullRequest {
                     url
                 }
             }
         }`, {prId: pr.id});
-        console.log(`Rebased PR: ${url}`);
+        console.debug(res);
+        console.log(`Rebased PR: ${pr.url}`);
     }
 }
