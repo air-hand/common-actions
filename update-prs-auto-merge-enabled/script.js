@@ -30,6 +30,8 @@ module.exports = async ({github, context}) => {
         baseRef: BASE_BRANCH,
     });
 
+    console.debug(JSON.stringify(pullRequestNodes));
+
     const autoMergeEnabledPRs = pullRequestNodes
         .filter(pr => pr.autoMergeRequest && pr.autoMergeRequest.enabledAt && pr.mergeable === 'MERGEABLE')
         .map(pr => ({id: pr.id, url: pr.url}))
