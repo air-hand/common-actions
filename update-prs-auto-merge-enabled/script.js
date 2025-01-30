@@ -45,8 +45,8 @@ module.exports = async ({github, context}) => {
 
     console.log('Updating PRs:', autoMergeEnabledPRs.map(pr => pr.url).join('\n'));
 
-    if (!context.payload.pull_request?.merged) {
-        console.warn('This action should only be run after a PR is merged');
+    if (!context.payload.push) {
+        console.warn('This action should only be run on.push to branch');
         return;
     }
 
