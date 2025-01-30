@@ -30,6 +30,8 @@ module.exports = async ({github, context}) => {
         baseRef: BASE_BRANCH,
     });
 
+    console.debug(JSON.stringify(pullRequestNodes));
+
     const autoMergeEnabledPRs = pullRequestNodes
         .filter(pr => pr.autoMergeRequest && pr.autoMergeRequest.enabledAt && pr.mergeable === 'MERGEABLE')
         .map(pr => ({id: pr.id, url: pr.url}))
@@ -43,8 +45,8 @@ module.exports = async ({github, context}) => {
 
     console.log('Updating PRs:', autoMergeEnabledPRs.map(pr => pr.url).join('\n'));
 
-    if (!context.payload.pull_request?.merged) {
-        console.warn('This action should only be run after a PR is merged');
+    if (!context.payload.push) {
+        console.warn('This action should only be run on.push to branch');
         return;
     }
 
