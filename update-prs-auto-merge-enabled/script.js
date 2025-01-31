@@ -33,7 +33,7 @@ module.exports = async ({github, context}) => {
     console.debug(JSON.stringify(pullRequestNodes));
 
     const autoMergeEnabledPRs = pullRequestNodes
-        .filter(pr => pr.autoMergeRequest && pr.autoMergeRequest.enabledAt && pr.mergeable === 'MERGEABLE')
+        .filter(pr => pr.autoMergeRequest && pr.autoMergeRequest.enabledAt && pr.mergeable !== 'CONFLICTING')
         .map(pr => ({id: pr.id, url: pr.url}))
         .slice(0, limit)
     ;
