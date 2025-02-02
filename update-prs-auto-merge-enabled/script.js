@@ -45,11 +45,6 @@ module.exports = async ({github, context}) => {
 
     console.log('Updating PRs:', autoMergeEnabledPRs.map(pr => pr.url).join('\n'));
 
-    if (!context.payload.push) {
-        console.warn('This action should only be run on.push to branch');
-        return;
-    }
-
     for (const pr of autoMergeEnabledPRs) {
         console.log(`Rebasing PR: ${pr.url}`);
         const res = await github.graphql(`mutation($prId: ID!) {
