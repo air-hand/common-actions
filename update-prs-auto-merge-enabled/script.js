@@ -8,16 +8,16 @@ async function retryGraphQLRequestFunc(func, retries = 3, sleep_ms = 1000) {
         try {
             return await func();
         } catch (error) {
+            if (error.name !== "GraphqlResponseError") {
+                throw error;
+            }
+            attempts++;
             if (attempts >= retries) {
                 console.error('Max retries reached. Exiting...');
                 throw error;
             }
-            if (!(error instanceof GraphqlResponseError)) {
-                throw error;
-            }
-            attempts++;
             console.log(`Retrying... (${attempts}/${retries})`);
-            await sleep(sleep_ms);
+            await sleep(sleep_ms * attempts);
         }
     }
 }
