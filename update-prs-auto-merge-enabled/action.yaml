@@ -14,6 +14,11 @@ inputs:
     type: number
     required: false
     default: 30
+  update_method:
+    description: "The method to update the PRs (rebase or merge)"
+    type: string
+    required: false
+    default: "rebase"
 
 runs:
   using: "composite"
@@ -23,6 +28,7 @@ runs:
       env:
         BASE_BRANCH: ${{ inputs.base_branch }}
         LIMITS: ${{ inputs.limits }}
+        UPDATE_METHOD: ${{ inputs.update_method }}
       with:
         github-token: ${{ inputs.token }}
         script: |

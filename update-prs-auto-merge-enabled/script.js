@@ -26,6 +26,7 @@ module.exports = async ({github, context}) => {
     const {
         BASE_BRANCH,
         LIMITS,
+        UPDATE_METHOD,
     } = process.env;
 
     const limit = (() => {
@@ -56,6 +57,9 @@ module.exports = async ({github, context}) => {
 
     console.debug(JSON.stringify(pullRequestNodes));
 
+    const updateMethod = UPDATE_METHOD.toUpperCase() === 'MERGE' ? 'MERGE' : 'REBASE';
+    console.log(`Update method: ${updateMethod}`);
+
     const autoMergeEnabledPRs = pullRequestNodes
         .filter(pr => pr.autoMergeRequest && pr.autoMergeRequest.enabledAt && pr.mergeable !== 'CONFLICTING')
         .map(pr => ({id: pr.id, url: pr.url}))
@@ -70,10 +74,10 @@ module.exports = async ({github, context}) => {
     console.log('Updating PRs:', autoMergeEnabledPRs.map(pr => pr.url).join('\n'));
 
     for (const pr of autoMergeEnabledPRs) {
-        console.log(`Rebasing PR: ${pr.url}`);
+        console.log(`Updating PR: ${pr.url}`);
         const res = await retryGraphQLRequestFunc(async() => {
-            return await github.graphql(`mutation($prId: ID!) {
-                updatePullRequestBranch(input: {pullRequestId: $prId, updateMethod: REBASE}) {
+            return await github.graphql(`mutation($prId: ID!, $updateMethod: PullRequestBranchUpdateMethod!) {
+                updatePullRequestBranch(input: {pullRequestId: $prId, updateMethod: $updateMethod}) {
                     pullRequest {
                         url
                         autoMergeRequest {
@@ -81,9 +85,9 @@ module.exports = async ({github, context}) => {
                         }
                     }
                 }
-            }`, {prId: pr.id});
+            }`, {prId: pr.id, updateMethod: updateMethod});
         });
         console.debug(JSON.stringify(res));
-        console.log(`Rebased PR: ${pr.url}`);
+        console.log(`Updated PR: ${pr.url}`);
     }
 }
