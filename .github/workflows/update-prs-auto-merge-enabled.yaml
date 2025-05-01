@@ -30,8 +30,18 @@ jobs:
         with:
           app-id: ${{ vars.APP_ID }}
           private-key: ${{ secrets.APP_PRIVATE_KEY }}
-      - uses: ./update-prs-auto-merge-enabled
+
+      - name: Update PRs by rebase
+        uses: ./update-prs-auto-merge-enabled
         with:
           token: ${{ steps.app_token.outputs.token }}
           base_branch: main
           limits: 30
+
+      - name: Update PRs by merge
+        uses: ./update-prs-auto-merge-enabled
+        with:
+          token: ${{ steps.app_token.outputs.token }}
+          base_branch: main
+          limits: 30
+          update_method: merge
