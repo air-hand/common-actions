@@ -1,3 +1,27 @@
+async function sleep(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+async function retryGraphQLRequestFunc(func, retries = 3, sleep_ms = 1000) {
+    let attempts = 0;
+    while (attempts < retries) {
+        try {
+            return await func();
+        } catch (error) {
+            if (attempts >= retries) {
+                console.error('Max retries reached. Exiting...');
+                throw error;
+            }
+            if (!(error instanceof GraphqlResponseError)) {
+                throw error;
+            }
+            attempts++;
+            console.log(`Retrying... (${attempts}/${retries})`);
+            await sleep(sleep_ms);
+        }
+    }
+}
+
 module.exports = async ({github, context}) => {
     const {
         BASE_BRANCH,
@@ -47,16 +71,18 @@ module.exports = async ({github, context}) => {
 
     for (const pr of autoMergeEnabledPRs) {
         console.log(`Rebasing PR: ${pr.url}`);
-        const res = await github.graphql(`mutation($prId: ID!) {
-            updatePullRequestBranch(input: {pullRequestId: $prId, updateMethod: REBASE}) {
-                pullRequest {
-                    url
-                    autoMergeRequest {
-                        enabledAt
+        const res = await retryGraphQLRequestFunc(async() => {
+            return await github.graphql(`mutation($prId: ID!) {
+                updatePullRequestBranch(input: {pullRequestId: $prId, updateMethod: REBASE}) {
+                    pullRequest {
+                        url
+                        autoMergeRequest {
+                            enabledAt
+                        }
                     }
                 }
-            }
-        }`, {prId: pr.id});
+            }`, {prId: pr.id});
+        });
         console.debug(JSON.stringify(res));
         console.log(`Rebased PR: ${pr.url}`);
     }
