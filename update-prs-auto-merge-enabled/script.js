@@ -73,21 +73,32 @@ module.exports = async ({github, context}) => {
 
     console.log('Updating PRs:', autoMergeEnabledPRs.map(pr => pr.url).join('\n'));
 
+    let errors = [];
+
     for (const pr of autoMergeEnabledPRs) {
         console.log(`Updating PR: ${pr.url}`);
-        const res = await retryGraphQLRequestFunc(async() => {
-            return await github.graphql(`mutation($prId: ID!, $updateMethod: PullRequestBranchUpdateMethod!) {
-                updatePullRequestBranch(input: {pullRequestId: $prId, updateMethod: $updateMethod}) {
-                    pullRequest {
-                        url
-                        autoMergeRequest {
-                            enabledAt
+        try {
+            const res = await retryGraphQLRequestFunc(async() => {
+                return await github.graphql(`mutation($prId: ID!, $updateMethod: PullRequestBranchUpdateMethod!) {
+                    updatePullRequestBranch(input: {pullRequestId: $prId, updateMethod: $updateMethod}) {
+                        pullRequest {
+                            url
+                            autoMergeRequest {
+                                enabledAt
+                            }
                         }
                     }
-                }
-            }`, {prId: pr.id, updateMethod: updateMethod});
-        });
+                }`, {prId: pr.id, updateMethod: updateMethod});
+            });
+        } catch (e) {
+            errors.push(e);
+            continue;
+        }
         console.debug(JSON.stringify(res));
         console.log(`Updated PR: ${pr.url}`);
+    }
+
+    if (errors.length !== 0) {
+        context.setFailed(errors.map(e=>e.message).join("\n"));
     }
 }
