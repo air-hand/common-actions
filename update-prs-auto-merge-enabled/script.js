@@ -99,6 +99,6 @@ module.exports = async ({github, context}) => {
     }
 
     if (errors.length !== 0) {
-        context.setFailed(errors.map(e=>e.message).join("\n"));
+        throw new Error(errors.map(e=>e.message).join("\n"));
     }
 }
