@@ -90,11 +90,11 @@ module.exports = async ({github, context}) => {
                     }
                 }`, {prId: pr.id, updateMethod: updateMethod});
             });
+            console.debug(JSON.stringify(res));
         } catch (e) {
             errors.push(e);
             continue;
         }
-        console.debug(JSON.stringify(res));
         console.log(`Updated PR: ${pr.url}`);
     }
 
