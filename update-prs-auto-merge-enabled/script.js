@@ -22,7 +22,7 @@ async function retryGraphQLRequestFunc(func, retries = 3, sleep_ms = 1000) {
     }
 }
 
-module.exports = async ({github, context, core}) => {
+module.exports = async ({github, context}) => {
     const {
         BASE_BRANCH,
         LIMITS,
@@ -99,6 +99,6 @@ module.exports = async ({github, context, core}) => {
     }
 
     if (errors.length !== 0) {
-        core.setFailed(errors.map(e=>e.message).join("\n"));
+        throw new Error(errors.map(e=>e.message).join("\n")));
     }
 }
