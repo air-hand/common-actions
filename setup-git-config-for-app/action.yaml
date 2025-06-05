@@ -14,16 +14,16 @@ runs:
       env:
         GH_TOKEN: ${{ inputs.token }}
       run: |
-        # Get GitHub App information
-        APP_INFO=$(gh api /app)
-        APP_NAME=$(echo "$APP_INFO" | jq -r '.name')
-        APP_ID=$(echo "$APP_INFO" | jq -r '.id')
+        # Get GitHub App installation information
+        INSTALLATION_INFO=$(gh api /installation)
+        APP_ID=$(echo "$INSTALLATION_INFO" | jq -r '.app_id')
+        APP_SLUG=$(echo "$INSTALLATION_INFO" | jq -r '.app_slug // "github-actions"')
         
-        echo "GitHub App: $APP_NAME (ID: $APP_ID)"
+        echo "GitHub App: $APP_SLUG (ID: $APP_ID)"
         
         # Generate user name and email for the GitHub App
-        USER_NAME="${APP_NAME}[bot]"
-        USER_EMAIL="${APP_ID}+${APP_NAME}[bot]@users.noreply.github.com"
+        USER_NAME="${APP_SLUG}[bot]"
+        USER_EMAIL="${APP_ID}+${APP_SLUG}[bot]@users.noreply.github.com"
         
         # Set global git config
         git config --global user.name "$USER_NAME"
