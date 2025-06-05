@@ -1,9 +1,12 @@
 name: "Setup Git Config for GitHub App"
-description: "Configure global git user settings for GitHub App token"
+description: "Configure global git user settings for GitHub App"
 
 inputs:
-  token:
-    description: "GitHub App token"
+  app-id:
+    description: "GitHub App ID"
+    required: true
+  app-slug:
+    description: "GitHub App slug"
     required: true
 
 runs:
@@ -12,13 +15,9 @@ runs:
     - name: Setup global git config for GitHub App
       shell: bash
       env:
-        GH_TOKEN: ${{ inputs.token }}
+        APP_ID: ${{ inputs.app-id }}
+        APP_SLUG: ${{ inputs.app-slug }}
       run: |
-        # Get GitHub App installation information
-        INSTALLATION_INFO=$(gh api /installation)
-        APP_ID=$(echo "$INSTALLATION_INFO" | jq -r '.app_id')
-        APP_SLUG=$(echo "$INSTALLATION_INFO" | jq -r '.app_slug // "github-actions"')
-        
         echo "GitHub App: $APP_SLUG (ID: $APP_ID)"
         
         # Generate user name and email for the GitHub App

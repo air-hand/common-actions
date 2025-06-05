@@ -23,12 +23,13 @@ jobs:
         with:
           app-id: ${{ vars.APP_ID }}
           private-key: ${{ secrets.APP_PRIVATE_KEY }}
-          permissions-contents: write
+          permission-contents: write
 
       - name: Setup git config for App
         uses: ./setup-git-config-for-app
         with:
-          token: ${{ steps.app_token.outputs.token }}
+          app-id: ${{ steps.app_token.outputs.app-id }}
+          app-slug: ${{ steps.app_token.outputs.app-slug }}
 
       - name: Create test branch and commit
         env:
