@@ -2,8 +2,8 @@ name: "Setup Git Config for GitHub App"
 description: "Configure global git user settings for GitHub App"
 
 inputs:
-  app-id:
-    description: "GitHub App ID"
+  token:
+    description: "GitHub App token"
     required: true
   app-slug:
     description: "GitHub App slug"
@@ -12,17 +12,33 @@ inputs:
 runs:
   using: "composite"
   steps:
+    - name: Get GitHub App User ID
+      id: get-user-id
+      shell: bash
+      env:
+        GH_TOKEN: ${{ inputs.token }}
+        APP_SLUG: ${{ inputs.app-slug }}
+      run: |
+        USER_ID=$(gh api "/users/${APP_SLUG}[bot]" --jq .id)
+        echo "user-id=$USER_ID" >> $GITHUB_OUTPUT
+        echo "GitHub App User ID: $USER_ID"
+    
     - name: Setup global git config for GitHub App
       shell: bash
       env:
-        APP_ID: ${{ inputs.app-id }}
+        GH_TOKEN: ${{ inputs.token }}
         APP_SLUG: ${{ inputs.app-slug }}
+        USER_ID: ${{ steps.get-user-id.outputs.user-id }}
       run: |
-        echo "GitHub App: $APP_SLUG (ID: $APP_ID)"
+        echo "GitHub App: $APP_SLUG (User ID: $USER_ID)"
+        
+        # Configure gh CLI authentication
+        echo "${GH_TOKEN}" | gh auth login --with-token
+        gh auth setup-git
         
         # Generate user name and email for the GitHub App
         USER_NAME="${APP_SLUG}[bot]"
-        USER_EMAIL="${APP_ID}+${APP_SLUG}[bot]@users.noreply.github.com"
+        USER_EMAIL="${USER_ID}+${APP_SLUG}[bot]@users.noreply.github.com"
         
         # Set global git config
         git config --global user.name "$USER_NAME"
@@ -31,3 +47,4 @@ runs:
         echo "✅ Global git config set:"
         echo "   Name: $(git config --global user.name)"
         echo "   Email: $(git config --global user.email)"
+        echo "   Authentication: Configured via gh auth"

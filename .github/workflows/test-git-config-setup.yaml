@@ -28,7 +28,7 @@ jobs:
       - name: Setup git config for App
         uses: ./setup-git-config-for-app
         with:
-          app-id: ${{ steps.app_token.outputs.app-id }}
+          token: ${{ steps.app_token.outputs.token }}
           app-slug: ${{ steps.app_token.outputs.app-slug }}
 
       - name: Create test branch and commit
