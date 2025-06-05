@@ -32,9 +32,8 @@ runs:
       run: |
         echo "GitHub App: $APP_SLUG (User ID: $USER_ID)"
         
-        # Configure gh CLI authentication
-        echo "${GH_TOKEN}" | gh auth login --with-token
-        gh auth setup-git
+        # Configure git to use the GitHub App token for authentication
+        git config --global url."https://x-access-token:${GH_TOKEN}@github.com/".insteadOf "https://github.com/"
         
         # Generate user name and email for the GitHub App
         USER_NAME="${APP_SLUG}[bot]"
@@ -47,4 +46,4 @@ runs:
         echo "✅ Global git config set:"
         echo "   Name: $(git config --global user.name)"
         echo "   Email: $(git config --global user.email)"
-        echo "   Authentication: Configured via gh auth"
+        echo "   Authentication: Configured for GitHub App token"
