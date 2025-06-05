@@ -40,6 +40,9 @@ module.exports = async ({github, context}) => {
                 nodes {
                     id
                     url
+                    author {
+                        login
+                    }
                     autoMergeRequest {
                         enabledAt
                     }
@@ -60,7 +63,18 @@ module.exports = async ({github, context}) => {
     const updateMethod = UPDATE_METHOD.toUpperCase() === 'MERGE' ? 'MERGE' : 'REBASE';
     console.log(`Update method: ${updateMethod}`);
 
+    // Exclude bot PRs that auto-update themselves to avoid conflicts
+    const excludedAuthors = ['renovate[bot]', 'dependabot[bot]'];
+
     const autoMergeEnabledPRs = pullRequestNodes
+        .filter(pr => {
+            const authorLogin = pr.author?.login;
+            if (excludedAuthors.includes(authorLogin)) {
+                console.log(`Skipping PR by ${authorLogin}: ${pr.url}`);
+                return false;
+            }
+            return true;
+        })
         .filter(pr => pr.autoMergeRequest && pr.autoMergeRequest.enabledAt && pr.mergeable !== 'CONFLICTING')
         .map(pr => ({id: pr.id, url: pr.url}))
         .slice(0, limit)
