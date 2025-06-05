@@ -67,7 +67,6 @@ module.exports = async ({github, context}) => {
     const excludedAuthors = ['renovate[bot]', 'dependabot[bot]'];
 
     const autoMergeEnabledPRs = pullRequestNodes
-        .filter(pr => pr.autoMergeRequest && pr.autoMergeRequest.enabledAt && pr.mergeable !== 'CONFLICTING')
         .filter(pr => {
             const authorLogin = pr.author?.login;
             if (excludedAuthors.includes(authorLogin)) {
@@ -76,6 +75,7 @@ module.exports = async ({github, context}) => {
             }
             return true;
         })
+        .filter(pr => pr.autoMergeRequest && pr.autoMergeRequest.enabledAt && pr.mergeable !== 'CONFLICTING')
         .map(pr => ({id: pr.id, url: pr.url}))
         .slice(0, limit)
     ;
