@@ -1,0 +1,34 @@
+name: "Setup Git Config for GitHub App"
+description: "Configure global git user settings for GitHub App token"
+
+inputs:
+  token:
+    description: "GitHub App token"
+    required: true
+
+runs:
+  using: "composite"
+  steps:
+    - name: Setup global git config for GitHub App
+      shell: bash
+      env:
+        GH_TOKEN: ${{ inputs.token }}
+      run: |
+        # Get GitHub App information
+        APP_INFO=$(gh api /app)
+        APP_NAME=$(echo "$APP_INFO" | jq -r '.name')
+        APP_ID=$(echo "$APP_INFO" | jq -r '.id')
+        
+        echo "GitHub App: $APP_NAME (ID: $APP_ID)"
+        
+        # Generate user name and email for the GitHub App
+        USER_NAME="${APP_NAME}[bot]"
+        USER_EMAIL="${APP_ID}+${APP_NAME}[bot]@users.noreply.github.com"
+        
+        # Set global git config
+        git config --global user.name "$USER_NAME"
+        git config --global user.email "$USER_EMAIL"
+        
+        echo "✅ Global git config set:"
+        echo "   Name: $(git config --global user.name)"
+        echo "   Email: $(git config --global user.email)"
