@@ -1,0 +1,107 @@
+name: "Test Git Config Setup"
+
+on:
+  pull_request:
+    branches:
+      - main
+
+permissions: {}
+
+jobs:
+  test-git-config-setup:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: write  # Required for creating and deleting test branches
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          
+      - uses: actions/create-github-app-token@v2
+        id: app_token
+        with:
+          app-id: ${{ vars.APP_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
+          permission-contents: write
+
+      - name: Setup git config for App
+        uses: ./setup-git-config-for-app
+        with:
+          token: ${{ steps.app_token.outputs.token }}
+          app-slug: ${{ steps.app_token.outputs.app-slug }}
+
+      - name: Create test branch and commit
+        env:
+          GH_TOKEN: ${{ steps.app_token.outputs.token }}
+        run: |
+          # Create test branch
+          TEST_BRANCH="test/git-config-$(date +%s)"
+          echo "Creating test branch: $TEST_BRANCH"
+          
+          git checkout -b "$TEST_BRANCH"
+          
+          echo "=== Git Config Verification ==="
+          echo "Name: $(git config user.name)"
+          echo "Email: $(git config user.email)"
+          
+          echo "=== Create and push test commit ==="
+          git commit --allow-empty -m "Test commit for verification check"
+          
+          # Push test branch
+          git push origin "$TEST_BRANCH"
+          
+          # Get latest commit SHA
+          COMMIT_SHA=$(git rev-parse HEAD)
+          echo "Test commit SHA: $COMMIT_SHA"
+          echo "TEST_BRANCH=$TEST_BRANCH" >> $GITHUB_ENV
+          echo "COMMIT_SHA=$COMMIT_SHA" >> $GITHUB_ENV
+
+      - name: Check commit verification status
+        env:
+          GH_TOKEN: ${{ steps.app_token.outputs.token }}
+        run: |
+          echo "=== Checking commit verification status ==="
+          
+          # Get commit information via GitHub API
+          COMMIT_INFO=$(gh api repos/$GITHUB_REPOSITORY/commits/$COMMIT_SHA)
+          
+          # Extract verification information
+          VERIFIED=$(echo "$COMMIT_INFO" | jq -r '.commit.verification.verified')
+          REASON=$(echo "$COMMIT_INFO" | jq -r '.commit.verification.reason')
+          SIGNATURE=$(echo "$COMMIT_INFO" | jq -r '.commit.verification.signature // "none"')
+          
+          echo "Verification Status:"
+          echo "  Verified: $VERIFIED"
+          echo "  Reason: $REASON"
+          echo "  Signature: $SIGNATURE"
+          
+          # Commit author information
+          AUTHOR_NAME=$(echo "$COMMIT_INFO" | jq -r '.commit.author.name')
+          AUTHOR_EMAIL=$(echo "$COMMIT_INFO" | jq -r '.commit.author.email')
+          COMMITTER_NAME=$(echo "$COMMIT_INFO" | jq -r '.commit.committer.name')
+          COMMITTER_EMAIL=$(echo "$COMMIT_INFO" | jq -r '.commit.committer.email')
+          
+          echo "Author: $AUTHOR_NAME <$AUTHOR_EMAIL>"
+          echo "Committer: $COMMITTER_NAME <$COMMITTER_EMAIL>"
+          
+          # Check if verified
+          if [ "$VERIFIED" = "true" ]; then
+            echo "✅ Commit is verified!"
+          else
+            echo "❌ Commit is NOT verified"
+            echo "Reason: $REASON"
+            # Don't fail the test yet (still experimental)
+          fi
+
+      - name: Cleanup test branch
+        if: ${{ !cancelled() }}
+        env:
+          GH_TOKEN: ${{ steps.app_token.outputs.token }}
+        run: |
+          echo "=== Cleaning up test branch ==="
+          if [ -n "$TEST_BRANCH" ]; then
+            # Delete remote branch
+            git push origin --delete "$TEST_BRANCH" || echo "Remote branch deletion failed or already deleted"
+            echo "Test branch $TEST_BRANCH cleaned up"
+          fi
