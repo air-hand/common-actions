@@ -64,7 +64,7 @@ module.exports = async ({github, context}) => {
     console.log(`Update method: ${updateMethod}`);
 
     // Exclude bot PRs that auto-update themselves to avoid conflicts
-    const excludedAuthors = ['renovate', 'mend',  'dependabot'];
+    const excludedAuthors = ['renovate', 'dependabot'];
 
     const autoMergeEnabledPRs = pullRequestNodes
         .filter(pr => {
