@@ -24,7 +24,7 @@ runs:
   using: "composite"
   steps:
     - name: update PRs auto merge enabled
-      uses: actions/github-script@v7
+      uses: actions/github-script@v9
       env:
         BASE_BRANCH: ${{ inputs.base_branch }}
         LIMITS: ${{ inputs.limits }}
